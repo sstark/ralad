@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"gopkg.in/cheggaaa/pb.v1"
 	"io"
 	"log"
 	"mime"
@@ -107,7 +108,12 @@ func ralad(downloadUrl string) error {
 		return fmt.Errorf("error creating file: %s", err)
 	}
 	defer outf.Close()
-	written, err := io.Copy(outf, resp.Body)
+	bar := pb.New(int(resp.ContentLength)).SetUnits(pb.U_BYTES)
+	bar.ShowSpeed = true
+	bar.Format("▰▰▰▱▰")
+	bar.Start()
+	rd := bar.NewProxyReader(resp.Body)
+	written, err := io.Copy(outf, rd)
 	if err != nil {
 		return fmt.Errorf("error writing file: %s", err)
 	}
