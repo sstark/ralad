@@ -62,12 +62,12 @@ func nameIsSignificant(n string) bool {
 	return true
 }
 
-func makeFilename(req *http.Request) string {
+func makeFilename(resp *http.Response) string {
 	var name string
-	cdp := req.Header.Get("Content-Disposition")
+	cdp := resp.Header.Get("Content-Disposition")
+	debugf(cdp)
 	if cdp != "" {
 		debugf("found Content-Disposition header: %+v", cdp)
-		fmt.Println(cdp)
 		_, params, _ := mime.ParseMediaType(cdp)
 		name = params["filename"]
 		debugf("filename from cdp header: %s", name)
@@ -75,7 +75,7 @@ func makeFilename(req *http.Request) string {
 			return name
 		}
 	}
-	path := strings.Trim(req.URL.Path, "/")
+	path := strings.Trim(resp.Request.URL.Path, "/")
 	pathElems := strings.Split(path, "/")
 	name = pathElems[len(pathElems)-1]
 	if nameIsSignificant(name) {
@@ -87,7 +87,7 @@ func makeFilename(req *http.Request) string {
 		debugf("full path is significant")
 		return name
 	}
-	name = req.URL.Host + nameSep + name
+	name = resp.Request.URL.Host + nameSep + name
 	if nameIsSignificant(name) {
 		debugf("host + full path is significant")
 		return name
@@ -137,7 +137,7 @@ func ralad(downloadUrl string) error {
 	}
 	debugf("Response header: %+v\n", resp.Header)
 
-	fn := makeFilename(resp.Request)
+	fn := makeFilename(resp)
 	if fn == "" {
 		return fmt.Errorf("unable to generate filename")
 	}
