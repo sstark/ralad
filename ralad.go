@@ -83,7 +83,6 @@ func makeFilename(req *http.Request) string {
 }
 
 func ralad(downloadUrl string) error {
-
 	client := &http.Client{
 		CheckRedirect: redirectPolicy,
 	}
@@ -112,8 +111,10 @@ func ralad(downloadUrl string) error {
 	if err != nil {
 		return fmt.Errorf("error writing file: %s", err)
 	}
-
 	fmt.Printf("%d bytes written\n", written)
+	if resp.ContentLength > -1 && resp.ContentLength != written {
+		fmt.Printf("warning: bytes written is different from Content-Length header (%d)\n", resp.ContentLength)
+	}
 	return nil
 }
 
