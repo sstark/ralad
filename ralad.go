@@ -18,6 +18,7 @@ const (
 	nameSep                 = "_"
 	fallbackOutfileName     = "ralad.out"
 	maxNumSuffix        int = 100000
+	maxRedirStrlen      int = 72
 )
 
 var (
@@ -44,9 +45,17 @@ func askOk(prompt string) bool {
 	return false
 }
 
+func ellipsize(s string) string {
+	if len(s) > maxRedirStrlen {
+		return fmt.Sprintf("%s...", s[:maxRedirStrlen-1])
+	} else {
+		return s
+	}
+}
+
 func redirectPolicy(req *http.Request, via []*http.Request) error {
 	debugf("redirect: %+v", req)
-	ans := askOk(fmt.Sprintf("redirect to %s? (y/n) ", req.URL))
+	ans := askOk(fmt.Sprintf("redirect to %s? (y/n) ", ellipsize(req.URL.String())))
 	if ans == true {
 		debugf("allow redirect")
 		return nil
