@@ -74,7 +74,7 @@ func makeFilename(resp *http.Response) string {
 	if cdp != "" {
 		debugf("found Content-Disposition header: %+v", cdp)
 		_, params, _ := mime.ParseMediaType(cdp)
-		name = params["filename"]
+		name = strings.Trim(params["filename"], "/")
 		debugf("filename from cdp header: %s", name)
 		if nameIsSignificant(name) {
 			return name
