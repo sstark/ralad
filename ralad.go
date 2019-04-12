@@ -83,6 +83,23 @@ func makeFilename(req *http.Request) string {
 	return ""
 }
 
+func downloadBody(resp *http.Response, outf io.Writer) error {
+	bar := pb.New(int(resp.ContentLength)).SetUnits(pb.U_BYTES)
+	bar.ShowSpeed = true
+	bar.Format("▰▰▰▱▰")
+	bar.Start()
+	rd := bar.NewProxyReader(resp.Body)
+	written, err := io.Copy(outf, rd)
+	if err != nil {
+		return fmt.Errorf("error writing file: %s", err)
+	}
+	fmt.Printf("%d bytes written\n", written)
+	if resp.ContentLength > -1 && resp.ContentLength != written {
+		fmt.Printf("warning: bytes written is different from Content-Length header (%d)\n", resp.ContentLength)
+	}
+	return nil
+}
+
 func ralad(downloadUrl string) error {
 	client := &http.Client{
 		CheckRedirect: redirectPolicy,
@@ -108,20 +125,7 @@ func ralad(downloadUrl string) error {
 		return fmt.Errorf("error creating file: %s", err)
 	}
 	defer outf.Close()
-	bar := pb.New(int(resp.ContentLength)).SetUnits(pb.U_BYTES)
-	bar.ShowSpeed = true
-	bar.Format("▰▰▰▱▰")
-	bar.Start()
-	rd := bar.NewProxyReader(resp.Body)
-	written, err := io.Copy(outf, rd)
-	if err != nil {
-		return fmt.Errorf("error writing file: %s", err)
-	}
-	fmt.Printf("%d bytes written\n", written)
-	if resp.ContentLength > -1 && resp.ContentLength != written {
-		fmt.Printf("warning: bytes written is different from Content-Length header (%d)\n", resp.ContentLength)
-	}
-	return nil
+	return downloadBody(resp, outf)
 }
 
 func main() {
