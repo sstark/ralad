@@ -127,7 +127,7 @@ func downloadBody(resp *http.Response, outf io.Writer) error {
 	}
 	bar.Finish()
 	fmt.Printf("%d bytes written\n", written)
-	if resp.ContentLength != -1 && cl != written {
+	if resp.ContentLength != -1 && resp.ContentLength != written {
 		fmt.Printf("warning: bytes written is different from Content-Length header (%d)\n", resp.ContentLength)
 	}
 	return nil
