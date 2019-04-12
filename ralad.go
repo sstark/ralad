@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	"crypto/tls"
+	"flag"
 	"fmt"
 	"gopkg.in/cheggaaa/pb.v1"
 	"io"
@@ -18,7 +20,10 @@ const (
 	maxNumSuffix        int = 100000
 )
 
-var logger *log.Logger
+var (
+	logger     *log.Logger
+	funsafeTLS bool
+)
 
 func debugf(format string, args ...interface{}) {
 	if os.Getenv("RALAD_DEBUG") == "1" {
@@ -126,6 +131,11 @@ func downloadBody(resp *http.Response, outf io.Writer) error {
 func ralad(downloadUrl string) error {
 	client := &http.Client{
 		CheckRedirect: redirectPolicy,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: funsafeTLS,
+			},
+		},
 	}
 	resp, err := client.Get(downloadUrl)
 	if err != nil {
@@ -153,12 +163,14 @@ func ralad(downloadUrl string) error {
 }
 
 func main() {
+	flag.BoolVar(&funsafeTLS, "unsafeTLS", false, "ignore TLS certificate errors")
+	flag.Parse()
 	logger = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
-	if len(os.Args) != 2 {
+	if len(flag.Args()) != 1 {
 		fmt.Printf("no url given\n")
 		os.Exit(1)
 	}
-	downloadUrl := os.Args[1]
+	downloadUrl := flag.Args()[0]
 	err := ralad(downloadUrl)
 	if err != nil {
 		fmt.Printf("ralad failed: %s\n", err)
