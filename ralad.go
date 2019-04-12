@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"gopkg.in/cheggaaa/pb.v1"
 	"io"
@@ -25,8 +26,29 @@ func debugf(format string, args ...interface{}) {
 	}
 }
 
+func askOk(prompt string) bool {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print(prompt)
+	text, _ := reader.ReadString('\n')
+	debugf(text)
+	switch strings.TrimSpace(text) {
+	case "yes", "y":
+		debugf("ok!")
+		return true
+	}
+	return false
+}
+
 func redirectPolicy(req *http.Request, via []*http.Request) error {
-	return nil
+	debugf("redirect: %+v", req)
+	ans := askOk(fmt.Sprintf("redirect to %s? (y/n) ", req.URL))
+	if ans == true {
+		debugf("allow redirect")
+		return nil
+	} else {
+		debugf("deny redirect")
+		return http.ErrUseLastResponse
+	}
 }
 
 func nameIsSignificant(n string) bool {
