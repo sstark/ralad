@@ -111,7 +111,8 @@ func makeFilename(resp *http.Response) string {
 }
 
 func downloadBody(resp *http.Response, outf io.Writer) error {
-	bar := pb.New(int(resp.ContentLength)).SetUnits(pb.U_BYTES)
+	debugf("Content-Length: %d", resp.ContentLength)
+	bar := pb.New64(resp.ContentLength).SetUnits(pb.U_BYTES)
 	bar.ShowSpeed = true
 	bar.Format("▰▰▰▱▰")
 	bar.Start()
