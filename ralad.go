@@ -89,7 +89,7 @@ func ralad(downloadUrl string) error {
 	}
 	resp, err := client.Get(downloadUrl)
 	if err != nil {
-		return fmt.Errorf("error getting: %s\n", err)
+		return fmt.Errorf("error getting: %s", err)
 	}
 	defer resp.Body.Close()
 
@@ -105,12 +105,12 @@ func ralad(downloadUrl string) error {
 	debugf("output filename will be: %s", fn)
 	outf, err := os.Create(fn)
 	if err != nil {
-		return fmt.Errorf("error creating file: %s\n", err)
+		return fmt.Errorf("error creating file: %s", err)
 	}
 	defer outf.Close()
 	written, err := io.Copy(outf, resp.Body)
 	if err != nil {
-		return fmt.Errorf("error writing file: %s\n", err)
+		return fmt.Errorf("error writing file: %s", err)
 	}
 
 	fmt.Printf("%d bytes written\n", written)
