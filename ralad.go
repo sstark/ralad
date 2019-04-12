@@ -125,7 +125,8 @@ func ralad(downloadUrl string) error {
 		return fmt.Errorf("error creating file: %s", err)
 	}
 	defer outf.Close()
-	return downloadBody(resp, outf)
+	err = downloadBody(resp, outf)
+	return err
 }
 
 func main() {
