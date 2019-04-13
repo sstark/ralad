@@ -176,8 +176,16 @@ func ralad(downloadUrl string) error {
 	return err
 }
 
+func Usage() {
+	fmt.Printf("Usage:\n")
+	fmt.Printf("\tralad [flags] url\n")
+	fmt.Printf("Flags:\n")
+	flag.PrintDefaults()
+}
+
 func main() {
 	flag.BoolVar(&funsafeTLS, "unsafeTLS", false, "ignore TLS certificate errors")
+	flag.Usage = Usage
 	flag.Parse()
 	logger = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
 	if len(flag.Args()) != 1 {
