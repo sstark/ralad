@@ -69,6 +69,7 @@ func ellipsize(u *url.URL) string {
 
 func redirectPolicy(req *http.Request, via []*http.Request) error {
 	debugf("redirect: %+v", req)
+	debugf("redirect (response): %+v", req.Response)
 	for _, v := range via {
 		debugf("via: %+v", v)
 	}
@@ -86,6 +87,9 @@ func redirectPolicy(req *http.Request, via []*http.Request) error {
 			debugf("deny redirect")
 			return http.ErrUseLastResponse
 		}
+	}
+	if fquiet == false {
+		fmt.Printf("[%s] -> %s\n", req.Response.Status, ellipsize(req.URL))
 	}
 	return nil
 }
@@ -187,7 +191,7 @@ func ralad(downloadUrl string) error {
 	defer resp.Body.Close()
 
 	if fquiet == false {
-		fmt.Printf("http status: %s\n", resp.Status)
+		fmt.Printf("[%s] .\n", resp.Status)
 	}
 	debugf("Response header: %+v\n", resp.Header)
 
