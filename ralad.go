@@ -28,6 +28,7 @@ var (
 	fredirPolicy string
 	frDisplay    string
 	foutfileName string
+	fquiet       bool
 )
 
 func debugf(format string, args ...interface{}) {
@@ -38,7 +39,7 @@ func debugf(format string, args ...interface{}) {
 
 func askOk(prompt string) bool {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Print(prompt)
+	fmt.Fprint(os.Stderr, prompt)
 	text, _ := reader.ReadString('\n')
 	debugf(text)
 	switch strings.TrimSpace(text) {
@@ -148,18 +149,24 @@ func downloadBody(resp *http.Response, outf io.Writer) (int64, error) {
 	if cl == -1 {
 		cl = 0
 	}
-	bar := pb.New64(cl).SetUnits(pb.U_BYTES)
-	bar.ShowSpeed = true
-	bar.Format("▰▰▰▱▰")
-	bar.Start()
-	rd := bar.NewProxyReader(resp.Body)
-	written, err := io.Copy(outf, rd)
+	var written int64
+	var err error
+	if fquiet == false {
+		bar := pb.New64(cl).SetUnits(pb.U_BYTES)
+		bar.ShowSpeed = true
+		bar.Format("▰▰▰▱▰")
+		bar.Start()
+		rd := bar.NewProxyReader(resp.Body)
+		written, err = io.Copy(outf, rd)
+		bar.Finish()
+	} else {
+		written, err = io.Copy(outf, resp.Body)
+	}
 	if err != nil {
 		return written, fmt.Errorf("error writing file: %s", err)
 	}
-	bar.Finish()
 	if resp.ContentLength != -1 && resp.ContentLength != written {
-		fmt.Printf("warning: bytes written (%d) is different from Content-Length header (%d)\n", written, resp.ContentLength)
+		fmt.Fprintf(os.Stderr, "warning: bytes written (%d) is different from Content-Length header (%d)\n", written, resp.ContentLength)
 	}
 	return written, nil
 }
@@ -205,7 +212,7 @@ func ralad(downloadUrl string) error {
 		defer outf.Close()
 	}
 	written, err := downloadBody(resp, outf)
-	if err == nil {
+	if err == nil && fquiet == false {
 		fmt.Printf("%d bytes written to %s\n", written, outf.Name())
 	}
 	return err
@@ -235,13 +242,18 @@ func validateFlags() error {
 }
 
 func main() {
+	logger = log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lshortfile)
 	flag.BoolVar(&funsafeTLS, "unsafeTLS", false, "ignore TLS certificate errors")
 	flag.StringVar(&fredirPolicy, "rpolicy", "relaxed", "set redirect confirmation policy: always|relaxed|never")
 	flag.StringVar(&frDisplay, "rdisplay", "truncate", "redirect display: full|part|truncate")
 	flag.StringVar(&foutfileName, "o", "", "output file name (use - for stdout)")
+	flag.BoolVar(&fquiet, "q", false, "show only errors (implied by -o -)")
 	flag.Usage = Usage
 	flag.Parse()
-	logger = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
+	if foutfileName == "-" {
+		debugf("implying -q")
+		flag.Set("q", "true")
+	}
 	err := validateFlags()
 	if err != nil {
 		fmt.Println(err)
