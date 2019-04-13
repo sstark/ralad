@@ -10,6 +10,7 @@ import (
 	"log"
 	"mime"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 )
@@ -25,6 +26,7 @@ var (
 	logger       *log.Logger
 	funsafeTLS   bool
 	fredirPolicy string
+	frDisplay    string
 )
 
 func debugf(format string, args ...interface{}) {
@@ -46,12 +48,21 @@ func askOk(prompt string) bool {
 	return false
 }
 
-func ellipsize(s string) string {
-	if len(s) > maxRedirStrlen {
-		return fmt.Sprintf("%s...", s[:maxRedirStrlen-1])
-	} else {
-		return s
+func ellipsize(u *url.URL) string {
+	switch frDisplay {
+	case "truncate":
+		s := u.String()
+		if len(s) > maxRedirStrlen {
+			return fmt.Sprintf("%s...", s[:maxRedirStrlen-1])
+		} else {
+			return s
+		}
+	case "part":
+		return fmt.Sprintf("%s://%s...", u.Scheme, u.Host)
+	case "full":
+		return u.String()
 	}
+	return u.String()
 }
 
 func redirectPolicy(req *http.Request, via []*http.Request) error {
@@ -65,7 +76,7 @@ func redirectPolicy(req *http.Request, via []*http.Request) error {
 	lastScheme := via[len(via)-1].URL.Scheme
 	lastHost := via[len(via)-1].URL.Host
 	if fredirPolicy == "always" || req.URL.Scheme != lastScheme || req.URL.Host != lastHost {
-		ans := askOk(fmt.Sprintf("redirect to %s? (y/n) ", ellipsize(req.URL.String())))
+		ans := askOk(fmt.Sprintf("redirect to %s? (y/n) ", ellipsize(req.URL)))
 		if ans == true {
 			debugf("allow redirect")
 			return nil
@@ -195,18 +206,40 @@ func Usage() {
 	flag.PrintDefaults()
 }
 
+func validateFlags() error {
+	switch fredirPolicy {
+	case "always", "relaxed", "never":
+		debugf(fredirPolicy)
+	default:
+		return fmt.Errorf("invalid value for rpolicy: %s", fredirPolicy)
+	}
+	switch frDisplay {
+	case "full", "part", "truncate":
+		debugf(frDisplay)
+	default:
+		return fmt.Errorf("invalid value for rdisplay: %s", frDisplay)
+	}
+	return nil
+}
+
 func main() {
 	flag.BoolVar(&funsafeTLS, "unsafeTLS", false, "ignore TLS certificate errors")
 	flag.StringVar(&fredirPolicy, "rpolicy", "relaxed", "set redirect confirmation policy: always|relaxed|never")
+	flag.StringVar(&frDisplay, "rdisplay", "truncate", "redirect display: full|part|truncate")
 	flag.Usage = Usage
 	flag.Parse()
 	logger = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
+	err := validateFlags()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	if len(flag.Args()) != 1 {
 		fmt.Printf("no url given\n")
 		os.Exit(1)
 	}
 	downloadUrl := flag.Args()[0]
-	err := ralad(downloadUrl)
+	err = ralad(downloadUrl)
 	if err != nil {
 		fmt.Printf("ralad failed: %s\n", err)
 		os.Exit(1)
