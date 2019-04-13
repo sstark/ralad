@@ -142,7 +142,7 @@ func makeFilename(resp *http.Response) string {
 	return ""
 }
 
-func downloadBody(resp *http.Response, outf io.Writer) error {
+func downloadBody(resp *http.Response, outf io.Writer) (int64, error) {
 	cl := resp.ContentLength
 	debugf("Content-Length: %d", cl)
 	if cl == -1 {
@@ -155,14 +155,13 @@ func downloadBody(resp *http.Response, outf io.Writer) error {
 	rd := bar.NewProxyReader(resp.Body)
 	written, err := io.Copy(outf, rd)
 	if err != nil {
-		return fmt.Errorf("error writing file: %s", err)
+		return written, fmt.Errorf("error writing file: %s", err)
 	}
 	bar.Finish()
-	fmt.Printf("%d bytes written\n", written)
 	if resp.ContentLength != -1 && resp.ContentLength != written {
-		fmt.Printf("warning: bytes written is different from Content-Length header (%d)\n", resp.ContentLength)
+		fmt.Printf("warning: bytes written (%d) is different from Content-Length header (%d)\n", written, resp.ContentLength)
 	}
-	return nil
+	return written, nil
 }
 
 func ralad(downloadUrl string) error {
@@ -195,7 +194,10 @@ func ralad(downloadUrl string) error {
 		return fmt.Errorf("error creating file: %s", err)
 	}
 	defer outf.Close()
-	err = downloadBody(resp, outf)
+	written, err := downloadBody(resp, outf)
+	if err == nil {
+		fmt.Printf("%d bytes written to %s\n", written, outf.Name())
+	}
 	return err
 }
 
