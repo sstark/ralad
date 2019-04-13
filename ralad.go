@@ -186,8 +186,8 @@ func ralad(downloadUrl string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("bad http status: %s", resp.Status)
+	if fquiet == false {
+		fmt.Printf("http status: %s\n", resp.Status)
 	}
 	debugf("Response header: %+v\n", resp.Header)
 
