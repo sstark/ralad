@@ -4,14 +4,20 @@ Ralad
 Simple http downloader. Its main feature is that the user has to agree with
 each redirect interactively.
 
-Options:
+Usage
+-----
 
-    -h
-        show help
+    ralad [flags] url
+
+    Flags:
+    -rdisplay string
+            redirect display: full|part|truncate (default "truncate")
+    -rpolicy string
+            set redirect confirmation policy: always|relaxed|never (default "relaxed")
     -unsafeTLS
-        ignore TLS certificate errors
+            ignore TLS certificate errors
 
-Ralad tries to figure out a useful output file name, if the server does not
+Ralad tries to figure out a useful output file name if the server does not
 supply a good one already.
 
 Example
