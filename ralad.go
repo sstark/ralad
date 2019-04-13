@@ -27,6 +27,7 @@ var (
 	funsafeTLS   bool
 	fredirPolicy string
 	frDisplay    string
+	foutfileName string
 )
 
 func debugf(format string, args ...interface{}) {
@@ -183,16 +184,26 @@ func ralad(downloadUrl string) error {
 	}
 	debugf("Response header: %+v\n", resp.Header)
 
-	fn := makeFilename(resp)
-	if fn == "" {
-		return fmt.Errorf("unable to generate filename")
+	var fn string
+	if foutfileName == "" {
+		fn = makeFilename(resp)
+		if fn == "" {
+			return fmt.Errorf("unable to generate filename")
+		}
+	} else {
+		fn = foutfileName
 	}
 	debugf("output filename will be: %s", fn)
-	outf, err := os.Create(fn)
-	if err != nil {
-		return fmt.Errorf("error creating file: %s", err)
+	var outf *os.File
+	if fn == "-" {
+		outf = os.Stdout
+	} else {
+		outf, err = os.Create(fn)
+		if err != nil {
+			return fmt.Errorf("error creating file: %s", err)
+		}
+		defer outf.Close()
 	}
-	defer outf.Close()
 	written, err := downloadBody(resp, outf)
 	if err == nil {
 		fmt.Printf("%d bytes written to %s\n", written, outf.Name())
@@ -227,6 +238,7 @@ func main() {
 	flag.BoolVar(&funsafeTLS, "unsafeTLS", false, "ignore TLS certificate errors")
 	flag.StringVar(&fredirPolicy, "rpolicy", "relaxed", "set redirect confirmation policy: always|relaxed|never")
 	flag.StringVar(&frDisplay, "rdisplay", "truncate", "redirect display: full|part|truncate")
+	flag.StringVar(&foutfileName, "o", "", "output file name (use - for stdout)")
 	flag.Usage = Usage
 	flag.Parse()
 	logger = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
