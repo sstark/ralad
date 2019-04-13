@@ -102,7 +102,6 @@ func nameIsSignificant(n string) bool {
 func makeFilename(resp *http.Response) string {
 	var name string
 	cdp := resp.Header.Get("Content-Disposition")
-	debugf(cdp)
 	if cdp != "" {
 		debugf("found Content-Disposition header: %+v", cdp)
 		_, params, _ := mime.ParseMediaType(cdp)
