@@ -22,8 +22,9 @@ const (
 )
 
 var (
-	logger     *log.Logger
-	funsafeTLS bool
+	logger       *log.Logger
+	funsafeTLS   bool
+	fredirPolicy string
 )
 
 func debugf(format string, args ...interface{}) {
@@ -55,14 +56,25 @@ func ellipsize(s string) string {
 
 func redirectPolicy(req *http.Request, via []*http.Request) error {
 	debugf("redirect: %+v", req)
-	ans := askOk(fmt.Sprintf("redirect to %s? (y/n) ", ellipsize(req.URL.String())))
-	if ans == true {
-		debugf("allow redirect")
-		return nil
-	} else {
-		debugf("deny redirect")
-		return http.ErrUseLastResponse
+	for _, v := range via {
+		debugf("via: %+v", v)
 	}
+	if fredirPolicy == "never" {
+		return nil
+	}
+	lastScheme := via[len(via)-1].URL.Scheme
+	lastHost := via[len(via)-1].URL.Host
+	if fredirPolicy == "always" || req.URL.Scheme != lastScheme || req.URL.Host != lastHost {
+		ans := askOk(fmt.Sprintf("redirect to %s? (y/n) ", ellipsize(req.URL.String())))
+		if ans == true {
+			debugf("allow redirect")
+			return nil
+		} else {
+			debugf("deny redirect")
+			return http.ErrUseLastResponse
+		}
+	}
+	return nil
 }
 
 func nameIsSignificant(n string) bool {
@@ -185,6 +197,7 @@ func Usage() {
 
 func main() {
 	flag.BoolVar(&funsafeTLS, "unsafeTLS", false, "ignore TLS certificate errors")
+	flag.StringVar(&fredirPolicy, "rpolicy", "relaxed", "set redirect confirmation policy: always|relaxed|never")
 	flag.Usage = Usage
 	flag.Parse()
 	logger = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile)
