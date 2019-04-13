@@ -10,6 +10,8 @@ Usage
     ralad [flags] url
 
     Flags:
+    -o string
+            output file name (use - for stdout)
     -rdisplay string
             redirect display: full|part|truncate (default "truncate")
     -rpolicy string
@@ -18,7 +20,7 @@ Usage
             ignore TLS certificate errors
 
 Ralad tries to figure out a useful output file name if the server does not
-supply a good one already.
+supply a good one already, and option -o was not used.
 
 Example
 -------
