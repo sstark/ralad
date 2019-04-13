@@ -12,6 +12,7 @@ Usage
     Flags:
     -o string
             output file name (use - for stdout)
+    -q      show only errors (implied by -o -)
     -rdisplay string
             redirect display: full|part|truncate (default "truncate")
     -rpolicy string
