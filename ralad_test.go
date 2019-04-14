@@ -154,7 +154,7 @@ var makefntests = []MakeFNTest{
 func TestMakeFilename(t *testing.T) {
 	var got, wanted string
 	buf := new(bytes.Buffer)
-	userWarn = buf
+	userWarnStream = buf
 	for _, mt := range makefntests {
 		buf.Reset()
 		got = makeFilename(mt.in)
@@ -186,7 +186,7 @@ var askOkTests = []AskOkTest{
 func TestAskOk(t *testing.T) {
 	var got, want bool
 	for _, aot := range askOkTests {
-		userInput = bufio.NewReader(strings.NewReader(aot.in))
+		userInputStream = bufio.NewReader(strings.NewReader(aot.in))
 		got = askOk("")
 		want = aot.out
 		if got != want {
@@ -321,8 +321,8 @@ var redirpoltests = []RedirPolTest{
 
 func TestRedirPolicy(t *testing.T) {
 	var got, want error
-	userPrompt = ioutil.Discard
-	userWarn = ioutil.Discard
+	userPromptStream = ioutil.Discard
+	userWarnStream = ioutil.Discard
 	for _, rpt := range redirpoltests {
 		t.Log(rpt.in.req)
 		t.Log(rpt.in.req.URL)
@@ -331,16 +331,16 @@ func TestRedirPolicy(t *testing.T) {
 			fredirPolicy = mode.mode
 			t.Logf("mode: %s", mode.mode)
 			for i, ui := range mode.userInputs {
-				userInput = bufio.NewReader(strings.NewReader(ui))
+				userInputStream = bufio.NewReader(strings.NewReader(ui))
 				want = mode.outs[i]
 				got = redirectPolicy(rpt.in.req, rpt.in.via)
 				if want != got {
 					t.Errorf("wanted %v, got %v", want, got)
 				}
-				// here we read the userInput again, like askOk would. If we
-				// get io.EOF, we know that the input was consumed earlier and
-				// the user was interactively asked to confirm the redirect
-				_, uiErr := userInput.ReadString('\n')
+				// here we read the userInputStream again, like askOk would. If
+				// we get io.EOF, we know that the input was consumed earlier
+				// and the user was interactively asked to confirm the redirect
+				_, uiErr := userInputStream.ReadString('\n')
 				if uiErr != mode.uiErr[i] {
 					if uiErr == io.EOF {
 						t.Errorf("user was prompted, but should not have been")
