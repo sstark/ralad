@@ -29,7 +29,10 @@ var (
 	frDisplay    string
 	foutfileName string
 	fquiet       bool
-	userInput    *bufio.Reader
+	// where to read user input from
+	userInput *bufio.Reader
+	// where user prompts are written to
+	userPrompt io.Writer = os.Stderr
 )
 
 func debugf(format string, args ...interface{}) {
@@ -39,7 +42,7 @@ func debugf(format string, args ...interface{}) {
 }
 
 func askOk(prompt string) bool {
-	fmt.Fprint(os.Stderr, prompt)
+	fmt.Fprint(userPrompt, prompt)
 	text, _ := userInput.ReadString('\n')
 	debugf(text)
 	switch strings.TrimSpace(text) {
