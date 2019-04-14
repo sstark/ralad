@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 )
 
@@ -119,6 +121,31 @@ func TestMakeFilename(t *testing.T) {
 		wanted = mt.out
 		if got != wanted {
 			t.Errorf("got %s, but wanted %s", got, wanted)
+		}
+	}
+}
+
+type AskOkTest struct {
+	in  string
+	out bool
+}
+
+var askOkTests = []AskOkTest{
+	{"y\n", true},
+	{"n\n", false},
+	{"yes\n", true},
+	{"safd\n", false},
+	{"\n", false},
+}
+
+func TestAskOk(t *testing.T) {
+	var got, want bool
+	for _, aot := range askOkTests {
+		userPrompt = bufio.NewReader(strings.NewReader(aot.in))
+		got = askOk("")
+		want = aot.out
+		if got != want {
+			t.Errorf("got %t, but wanted %t", got, want)
 		}
 	}
 }
