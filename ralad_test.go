@@ -217,6 +217,55 @@ var redirpoltests = []RedirPolTest{
 			},
 		},
 	},
+	{
+		in: RedirPolInput{
+			req: &http.Request{
+				// the request we are redirected to
+				Method: "GET",
+				URL: &url.URL{
+					Scheme: "http",
+					Host:   "cdn.example.com",
+					Path:   "/g2342353/bla.zip",
+				},
+				// the response that lead to the redirection
+				Response: &http.Response{
+					StatusCode: 307,
+					Status:     "307 Temporary Redirect",
+					Header: http.Header{
+						"Location": []string{"http://cdn.example.com/g2342353/bla.zip"},
+					},
+				},
+			},
+			via: []*http.Request{
+				// The earlier request that lead to the redirection
+				&http.Request{
+					Method: "GET",
+					URL: &url.URL{
+						Scheme: "http",
+						Host:   "dl.example.com",
+						Path:   "/bla.zip",
+					},
+				},
+			},
+		},
+		modes: []RedirMode{
+			{
+				mode:       "always",
+				userInputs: []string{"y\n", "n\n"},
+				outs:       []error{nil, http.ErrUseLastResponse},
+			},
+			{
+				mode:       "relaxed",
+				userInputs: []string{"y\n", "n\n"},
+				outs:       []error{nil, http.ErrUseLastResponse},
+			},
+			{
+				mode:       "never",
+				userInputs: []string{"\n", "\n"},
+				outs:       []error{nil, nil},
+			},
+		},
+	},
 }
 
 func TestRedirPolicy(t *testing.T) {
