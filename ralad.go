@@ -36,6 +36,8 @@ var (
 	userPromptStream io.Writer = os.Stderr
 	// where user warnings are written to
 	userWarnStream io.Writer = os.Stderr
+	// where the progress bar is written to
+	pbOutputStream io.Writer = os.Stdout
 )
 
 func debugf(format string, args ...interface{}) {
@@ -173,6 +175,7 @@ func downloadBody(resp *http.Response, outf io.Writer) (int64, error) {
 		bar := pb.New64(cl).SetUnits(pb.U_BYTES)
 		bar.ShowSpeed = true
 		bar.Format("▰▰▰▱▰")
+		bar.Output = pbOutputStream
 		bar.Start()
 		rd := bar.NewProxyReader(resp.Body)
 		written, err = io.Copy(outf, rd)
