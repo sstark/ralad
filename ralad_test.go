@@ -205,6 +205,16 @@ var redirpoltests = []RedirPolTest{
 				userInputs: []string{"y\n", "n\n"},
 				outs:       []error{nil, http.ErrUseLastResponse},
 			},
+			{
+				mode:       "relaxed",
+				userInputs: []string{"\n", "\n"},
+				outs:       []error{nil, nil},
+			},
+			{
+				mode:       "never",
+				userInputs: []string{"\n", "\n"},
+				outs:       []error{nil, nil},
+			},
 		},
 	},
 }
@@ -212,12 +222,14 @@ var redirpoltests = []RedirPolTest{
 func TestRedirPolicy(t *testing.T) {
 	var got, want error
 	userPrompt = ioutil.Discard
+	userWarn = ioutil.Discard
 	for _, rpt := range redirpoltests {
 		t.Log(rpt.in.req)
 		t.Log(rpt.in.req.URL)
 		t.Log(rpt.in.req.Response.StatusCode)
 		for _, mode := range rpt.modes {
 			fredirPolicy = mode.mode
+			t.Logf("mode: %s", mode.mode)
 			for i, ui := range mode.userInputs {
 				userInput = bufio.NewReader(strings.NewReader(ui))
 				want = mode.outs[i]
