@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -160,6 +161,7 @@ type RedirMode struct {
 	mode       string
 	userInputs []string
 	outs       []error
+	uiErr      []error
 }
 
 type RedirPolTest struct {
@@ -204,16 +206,19 @@ var redirpoltests = []RedirPolTest{
 				mode:       "always",
 				userInputs: []string{"y\n", "n\n"},
 				outs:       []error{nil, http.ErrUseLastResponse},
+				uiErr:      []error{io.EOF, io.EOF},
 			},
 			{
 				mode:       "relaxed",
 				userInputs: []string{"\n", "\n"},
 				outs:       []error{nil, nil},
+				uiErr:      []error{nil, nil},
 			},
 			{
 				mode:       "never",
 				userInputs: []string{"\n", "\n"},
 				outs:       []error{nil, nil},
+				uiErr:      []error{nil, nil},
 			},
 		},
 	},
@@ -253,16 +258,19 @@ var redirpoltests = []RedirPolTest{
 				mode:       "always",
 				userInputs: []string{"y\n", "n\n"},
 				outs:       []error{nil, http.ErrUseLastResponse},
+				uiErr:      []error{io.EOF, io.EOF},
 			},
 			{
 				mode:       "relaxed",
 				userInputs: []string{"y\n", "n\n"},
 				outs:       []error{nil, http.ErrUseLastResponse},
+				uiErr:      []error{io.EOF, io.EOF},
 			},
 			{
 				mode:       "never",
 				userInputs: []string{"\n", "\n"},
 				outs:       []error{nil, nil},
+				uiErr:      []error{nil, nil},
 			},
 		},
 	},
@@ -285,6 +293,17 @@ func TestRedirPolicy(t *testing.T) {
 				got = redirectPolicy(rpt.in.req, rpt.in.via)
 				if want != got {
 					t.Errorf("wanted %v, got %v", want, got)
+				}
+				// here we read the userInput again, like askOk would. If we
+				// get io.EOF, we know that the input was consumed earlier and
+				// the user was interactively asked to confirm the redirect
+				_, uiErr := userInput.ReadString('\n')
+				if uiErr != mode.uiErr[i] {
+					if uiErr == io.EOF {
+						t.Errorf("user was prompted, but should not have been")
+					} else {
+						t.Error("user was not prompted, but should have been")
+					}
 				}
 			}
 		}
