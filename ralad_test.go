@@ -114,6 +114,18 @@ var makefntests = []MakeFNTest{
 		},
 		"www.example.com_index.html",
 	},
+	{
+		&http.Response{
+			Request: &http.Request{
+				URL: &url.URL{
+					Scheme: "https",
+					Host:   "evil.example.com",
+					Path:   "/files/%2fetc%2fpasswd",
+				},
+			},
+		},
+		"%2fetc%2fpasswd",
+	},
 }
 
 func TestMakeFilename(t *testing.T) {
