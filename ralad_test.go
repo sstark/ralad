@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -146,6 +147,84 @@ func TestAskOk(t *testing.T) {
 		want = aot.out
 		if got != want {
 			t.Errorf("got %t, but wanted %t", got, want)
+		}
+	}
+}
+
+type RedirPolInput struct {
+	req *http.Request
+	via []*http.Request
+}
+
+type RedirMode struct {
+	mode       string
+	userInputs []string
+	outs       []error
+}
+
+type RedirPolTest struct {
+	in    RedirPolInput
+	modes []RedirMode
+}
+
+var redirpoltests = []RedirPolTest{
+	{
+		in: RedirPolInput{
+			req: &http.Request{
+				// the request we are redirected to
+				Method: "GET",
+				URL: &url.URL{
+					Scheme: "http",
+					Host:   "smeik",
+					Path:   "/r/bla.zip",
+				},
+				// the response that lead to the redirection
+				Response: &http.Response{
+					StatusCode: 301,
+					Header: http.Header{
+						"Location": []string{"http://smeik/r/bla.zip"},
+					},
+				},
+			},
+			via: []*http.Request{
+				// The earlier request that lead to the redirection
+				&http.Request{
+					Method: "GET",
+					URL: &url.URL{
+						Scheme: "http",
+						Host:   "smeik",
+						Path:   "/r2/bla.zip",
+					},
+				},
+			},
+		},
+		modes: []RedirMode{
+			{
+				mode:       "always",
+				userInputs: []string{"y\n", "n\n"},
+				outs:       []error{nil, http.ErrUseLastResponse},
+			},
+		},
+	},
+}
+
+func TestRedirPolicy(t *testing.T) {
+	var got, want error
+	userPrompt = ioutil.Discard
+	for _, rpt := range redirpoltests {
+		t.Log(rpt.in.req)
+		t.Log(rpt.in.req.URL)
+		t.Log(rpt.in.req.Response.StatusCode)
+		for _, mode := range rpt.modes {
+			fredirPolicy = mode.mode
+			for i, ui := range mode.userInputs {
+				userInput = bufio.NewReader(strings.NewReader(ui))
+				want = mode.outs[i]
+				got = redirectPolicy(rpt.in.req, rpt.in.via)
+				if want != got {
+					t.Errorf("wanted %v, got %v", want, got)
+				}
+			}
 		}
 	}
 }
