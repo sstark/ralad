@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/http"
 	"net/url"
 	"testing"
 )
@@ -48,6 +49,69 @@ func TestEllipsize(t *testing.T) {
 			if got != want {
 				t.Errorf("got %s, but wanted %s", got, want)
 			}
+		}
+	}
+}
+
+type MakeFNTest struct {
+	in  *http.Response
+	out string
+}
+
+var makefntests = []MakeFNTest{
+	{
+		&http.Response{
+			Header: http.Header{
+				"Content-Disposition": {"attachment; filename=something.zip"},
+			},
+		},
+		"something.zip",
+	},
+	{
+		&http.Response{
+			Request: &http.Request{
+				URL: &url.URL{
+					Scheme: "https",
+					Host:   "www.example.com",
+					Path:   "/34g/aw4f/f4.tgz",
+				},
+			},
+		},
+		"f4.tgz",
+	},
+	{
+		&http.Response{
+			Request: &http.Request{
+				URL: &url.URL{
+					Scheme: "https",
+					Host:   "www.example.com",
+					Path:   "/34g/aw4f/index.html",
+				},
+			},
+		},
+		"34g_aw4f_index.html",
+	},
+	{
+		&http.Response{
+			Request: &http.Request{
+				URL: &url.URL{
+					Scheme: "https",
+					Host:   "www.example.com",
+					Path:   "/index.html",
+				},
+			},
+		},
+		"www.example.com_index.html",
+	},
+}
+
+func TestMakeFilename(t *testing.T) {
+	var got, wanted string
+	for _, mt := range makefntests {
+		got = makeFilename(mt.in)
+		wanted = mt.out
+		if got != wanted {
+			t.Errorf("got %s, but wanted %s", got, wanted)
 		}
 	}
 }
