@@ -265,6 +265,7 @@ func main() {
 	}
 	if len(flag.Args()) != 1 {
 		fmt.Printf("no url given\n")
+		fmt.Printf("try `ralad -h' for help\n")
 		os.Exit(1)
 	}
 	downloadUrl := flag.Args()[0]
