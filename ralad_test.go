@@ -141,7 +141,7 @@ var askOkTests = []AskOkTest{
 func TestAskOk(t *testing.T) {
 	var got, want bool
 	for _, aot := range askOkTests {
-		userPrompt = bufio.NewReader(strings.NewReader(aot.in))
+		userInput = bufio.NewReader(strings.NewReader(aot.in))
 		got = askOk("")
 		want = aot.out
 		if got != want {

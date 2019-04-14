@@ -29,7 +29,7 @@ var (
 	frDisplay    string
 	foutfileName string
 	fquiet       bool
-	userPrompt   *bufio.Reader
+	userInput    *bufio.Reader
 )
 
 func debugf(format string, args ...interface{}) {
@@ -40,7 +40,7 @@ func debugf(format string, args ...interface{}) {
 
 func askOk(prompt string) bool {
 	fmt.Fprint(os.Stderr, prompt)
-	text, _ := userPrompt.ReadString('\n')
+	text, _ := userInput.ReadString('\n')
 	debugf(text)
 	switch strings.TrimSpace(text) {
 	case "yes", "y":
@@ -273,7 +273,7 @@ func main() {
 		os.Exit(1)
 	}
 	downloadUrl := flag.Args()[0]
-	userPrompt = bufio.NewReader(os.Stdin)
+	userInput = bufio.NewReader(os.Stdin)
 	err = ralad(downloadUrl)
 	if err != nil {
 		fmt.Printf("ralad failed: %s\n", err)
