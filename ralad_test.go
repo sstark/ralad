@@ -64,6 +64,13 @@ var makefntests = []MakeFNTest{
 			Header: http.Header{
 				"Content-Disposition": {"attachment; filename=something.zip"},
 			},
+			Request: &http.Request{
+				URL: &url.URL{
+					Scheme: "https",
+					Host:   "www.example.com",
+					Path:   "/34g/aw4f/somethingNot.zip",
+				},
+			},
 		},
 		"something.zip",
 	},
