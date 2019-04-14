@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -324,7 +325,6 @@ func TestRedirPolicy(t *testing.T) {
 	userPromptStream = ioutil.Discard
 	userWarnStream = ioutil.Discard
 	for _, rpt := range redirpoltests {
-		t.Log(rpt.in.req)
 		t.Log(rpt.in.req.URL)
 		t.Log(rpt.in.req.Response.StatusCode)
 		for _, mode := range rpt.modes {
@@ -349,6 +349,85 @@ func TestRedirPolicy(t *testing.T) {
 					}
 				}
 			}
+		}
+	}
+}
+
+var ErrBufLimit = errors.New("buffer limit reached")
+
+type LimitedBufWriter struct {
+	max     int
+	buf     *bytes.Buffer
+	written int
+}
+
+func NewLimitedBufWriter(b *bytes.Buffer, s int) io.Writer {
+	return &LimitedBufWriter{
+		buf:     b,
+		max:     s,
+		written: 0,
+	}
+}
+
+func (lb *LimitedBufWriter) Write(data []byte) (written int, err error) {
+	maxWrite := lb.max - written
+	written, err = lb.buf.Write(data[:maxWrite])
+	lb.written = lb.written + written
+	if written < len(data) {
+		err = ErrBufLimit
+	}
+	return
+}
+
+type DownloadBodyTestOut struct {
+	written int64
+	err     error
+	bufsize int
+}
+
+type DownloadBodyTest struct {
+	in  *http.Response
+	out DownloadBodyTestOut
+}
+
+var fakeContent = "fake body content"
+
+var downloadBodyTests = []DownloadBodyTest{
+	{
+		in: &http.Response{
+			ContentLength: int64(len(fakeContent)),
+			Body:          ioutil.NopCloser(strings.NewReader(fakeContent)),
+		},
+		out: DownloadBodyTestOut{
+			written: int64(len(fakeContent)),
+			bufsize: 17,
+		},
+	},
+	{
+		in: &http.Response{
+			ContentLength: int64(len(fakeContent)),
+			Body:          ioutil.NopCloser(strings.NewReader(fakeContent)),
+		},
+		out: DownloadBodyTestOut{
+			written: 13,
+			// cheap "full disk" simulation
+			bufsize: 13,
+		},
+	},
+}
+
+func TestDownloadBody(t *testing.T) {
+	pbOutputStream = ioutil.Discard
+	for _, resp := range downloadBodyTests {
+		buf := new(bytes.Buffer)
+		outbuf := NewLimitedBufWriter(buf, resp.out.bufsize)
+		outwr, _ := downloadBody(resp.in, outbuf)
+		if resp.out.written != outwr {
+			t.Errorf("written: wanted %d, got %d", resp.out.written, outwr)
+		}
+		got := buf.String()
+		if got != fakeContent[:resp.out.bufsize] {
+			t.Errorf("body: wanted %s, got %s", got, fakeContent)
 		}
 	}
 }
