@@ -181,6 +181,7 @@ var redirpoltests = []RedirPolTest{
 				// the response that lead to the redirection
 				Response: &http.Response{
 					StatusCode: 301,
+					Status:     "301 Moved Permanently",
 					Header: http.Header{
 						"Location": []string{"http://smeik/r/bla.zip"},
 					},
