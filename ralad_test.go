@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -58,8 +59,9 @@ func TestEllipsize(t *testing.T) {
 }
 
 type MakeFNTest struct {
-	in  *http.Response
-	out string
+	in   *http.Response
+	out  string
+	warn string
 }
 
 var makefntests = []MakeFNTest{
@@ -77,6 +79,23 @@ var makefntests = []MakeFNTest{
 			},
 		},
 		"something.zip",
+		"",
+	},
+	{
+		&http.Response{
+			Header: http.Header{
+				"Content-Disposition": {"attachment; filename=this/is/bogus"},
+			},
+			Request: &http.Request{
+				URL: &url.URL{
+					Scheme: "https",
+					Host:   "www.example.com",
+					Path:   "/34g/aw4f/bogus.zip",
+				},
+			},
+		},
+		"bogus.zip",
+		"failed to parse Content-Disposition header: mime: invalid media parameter",
 	},
 	{
 		&http.Response{
@@ -89,6 +108,7 @@ var makefntests = []MakeFNTest{
 			},
 		},
 		"f4.tgz",
+		"",
 	},
 	{
 		&http.Response{
@@ -101,6 +121,7 @@ var makefntests = []MakeFNTest{
 			},
 		},
 		"34g_aw4f_index.html",
+		"",
 	},
 	{
 		&http.Response{
@@ -113,6 +134,7 @@ var makefntests = []MakeFNTest{
 			},
 		},
 		"www.example.com_index.html",
+		"",
 	},
 	{
 		&http.Response{
@@ -125,16 +147,25 @@ var makefntests = []MakeFNTest{
 			},
 		},
 		"%2fetc%2fpasswd",
+		"",
 	},
 }
 
 func TestMakeFilename(t *testing.T) {
 	var got, wanted string
+	buf := new(bytes.Buffer)
+	userWarn = buf
 	for _, mt := range makefntests {
+		buf.Reset()
 		got = makeFilename(mt.in)
 		wanted = mt.out
 		if got != wanted {
 			t.Errorf("got %s, but wanted %s", got, wanted)
+		}
+		got = buf.String()
+		wanted = mt.warn
+		if got != wanted {
+			t.Errorf("user warning(s) should be\n\t\"%s\"\nbut is\n\t\"%s\"", got, wanted)
 		}
 	}
 }
