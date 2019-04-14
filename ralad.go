@@ -33,6 +33,8 @@ var (
 	userInput *bufio.Reader
 	// where user prompts are written to
 	userPrompt io.Writer = os.Stderr
+	// where user warnings are written to
+	userWarn io.Writer = os.Stderr
 )
 
 func debugf(format string, args ...interface{}) {
@@ -92,7 +94,7 @@ func redirectPolicy(req *http.Request, via []*http.Request) error {
 		}
 	}
 	if fquiet == false {
-		fmt.Printf("[%s] -> %s\n", req.Response.Status, ellipsize(req.URL))
+		fmt.Fprintf(userWarn, "[%s] -> %s\n", req.Response.Status, ellipsize(req.URL))
 	}
 	return nil
 }
@@ -115,7 +117,7 @@ func makeFilename(resp *http.Response) string {
 		debugf("found Content-Disposition header: %+v", cdp)
 		_, params, err := mime.ParseMediaType(cdp)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to parse Content-Disposition header: %s", err)
+			fmt.Fprintf(userWarn, "failed to parse Content-Disposition header: %s", err)
 		} else {
 			name = strings.Trim(params["filename"], "/")
 			debugf("filename from cdp header: %s", name)
@@ -177,7 +179,7 @@ func downloadBody(resp *http.Response, outf io.Writer) (int64, error) {
 		return written, fmt.Errorf("error writing file: %s", err)
 	}
 	if resp.ContentLength != -1 && resp.ContentLength != written {
-		fmt.Fprintf(os.Stderr, "warning: bytes written (%d) is different from Content-Length header (%d)\n", written, resp.ContentLength)
+		fmt.Fprintf(userWarn, "warning: bytes written (%d) is different from Content-Length header (%d)\n", written, resp.ContentLength)
 	}
 	return written, nil
 }
