@@ -10,7 +10,6 @@ import (
 	"log"
 	"mime"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"os"
 	"strings"
@@ -83,10 +82,6 @@ func redirectPolicy(req *http.Request, via []*http.Request) error {
 	}
 	if fredirPolicy == "never" {
 		return nil
-	}
-	if fquiet == false {
-		dump, _ := httputil.DumpRequestOut(req, false)
-		fmt.Fprintf(userWarnStream, string(dump))
 	}
 	lastScheme := via[len(via)-1].URL.Scheme
 	lastHost := via[len(via)-1].URL.Host
