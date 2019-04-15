@@ -37,6 +37,7 @@ var (
 	userWarnStream io.Writer = os.Stderr
 	// where the progress bar is written to
 	pbOutputStream io.Writer = os.Stdout
+	maxRedirects             = 10
 )
 
 func debugf(format string, args ...interface{}) {
@@ -75,6 +76,9 @@ func ellipsize(u *url.URL) string {
 }
 
 func redirectPolicy(req *http.Request, via []*http.Request) error {
+	if len(via) > maxRedirects {
+		return fmt.Errorf("stopped after %d redirects", maxRedirects)
+	}
 	debugf("redirect: %+v", req)
 	debugf("redirect (response): %+v", req.Response)
 	for _, v := range via {
@@ -200,7 +204,7 @@ func ralad(downloadUrl string) error {
 	}
 	resp, err := client.Get(downloadUrl)
 	if err != nil {
-		return fmt.Errorf("error getting: %s", err)
+		return err
 	}
 	defer resp.Body.Close()
 
