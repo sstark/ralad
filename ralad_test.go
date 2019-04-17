@@ -353,6 +353,23 @@ func TestRedirPolicy(t *testing.T) {
 	}
 }
 
+func TestMaxRedir(t *testing.T) {
+	maxrt := redirpoltests[0].in
+	var got error
+	got = redirectPolicy(maxrt.req, maxrt.via)
+	if got == ErrMaxRedirects {
+		t.Errorf("got %v, but should have received %v", got, nil)
+	}
+
+	for i := 0; i < maxRedirects+2; i++ {
+		maxrt.via = append(maxrt.via, maxrt.via[0])
+	}
+	got = redirectPolicy(maxrt.req, maxrt.via)
+	if got != ErrMaxRedirects {
+		t.Errorf("got %v, but should have received %v", got, ErrMaxRedirects)
+	}
+}
+
 var ErrBufLimit = errors.New("buffer limit reached")
 
 type LimitedBufWriter struct {
