@@ -77,7 +77,7 @@ func ellipsize(u *url.URL) string {
 
 func redirectPolicy(req *http.Request, via []*http.Request) error {
 	if len(via) > maxRedirects {
-		return fmt.Errorf("stopped after %d redirects", maxRedirects)
+		return ErrMaxRedirects
 	}
 	debugf("redirect: %+v", req)
 	debugf("redirect (response): %+v", req.Response)
