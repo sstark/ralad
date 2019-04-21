@@ -109,7 +109,7 @@ var makefntests = []MakeFNTest{
 			},
 		},
 		"f4.tgz",
-		"",
+		"no Content-Disposition header found",
 	},
 	{
 		&http.Response{
@@ -122,7 +122,7 @@ var makefntests = []MakeFNTest{
 			},
 		},
 		"34g_aw4f_index.html",
-		"",
+		"no Content-Disposition header found",
 	},
 	{
 		&http.Response{
@@ -135,7 +135,7 @@ var makefntests = []MakeFNTest{
 			},
 		},
 		"www.example.com_index.html",
-		"",
+		"no Content-Disposition header found",
 	},
 	{
 		&http.Response{
@@ -148,7 +148,7 @@ var makefntests = []MakeFNTest{
 			},
 		},
 		"%2fetc%2fpasswd",
-		"",
+		"no Content-Disposition header found",
 	},
 }
 
@@ -166,7 +166,7 @@ func TestMakeFilename(t *testing.T) {
 		got = buf.String()
 		wanted = mt.warn
 		if got != wanted {
-			t.Errorf("user warning(s) should be\n\t\"%s\"\nbut is\n\t\"%s\"", got, wanted)
+			t.Errorf("user warning(s) is\n\t\"%s\"\nbut should be\n\t\"%s\"", got, wanted)
 		}
 	}
 }

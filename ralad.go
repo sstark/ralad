@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"crypto/tls"
+	"errors"
 	"flag"
 	"fmt"
 	"gopkg.in/cheggaaa/pb.v1"
@@ -116,21 +117,29 @@ func nameIsSignificant(n string) bool {
 	return true
 }
 
+func getMimeFilename(resp *http.Response) (string, error) {
+	cdp := resp.Header.Get("Content-Disposition")
+	if cdp == "" {
+		return "", errors.New("no Content-Disposition header found")
+	}
+	debugf("found Content-Disposition header: %+v", cdp)
+	_, params, err := mime.ParseMediaType(cdp)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse Content-Disposition header: %s", err)
+	}
+	name := strings.Trim(params["filename"], "/")
+	debugf("filename from cdp header: %s", name)
+	return name, nil
+}
+
 func makeFilename(resp *http.Response) string {
 	var name string
-	cdp := resp.Header.Get("Content-Disposition")
-	if cdp != "" {
-		debugf("found Content-Disposition header: %+v", cdp)
-		_, params, err := mime.ParseMediaType(cdp)
-		if err != nil {
-			fmt.Fprintf(userWarnStream, "failed to parse Content-Disposition header: %s", err)
-		} else {
-			name = strings.Trim(params["filename"], "/")
-			debugf("filename from cdp header: %s", name)
-			if nameIsSignificant(name) {
-				return name
-			}
-		}
+	name, err := getMimeFilename(resp)
+	if err != nil {
+		fmt.Fprintf(userWarnStream, "%s", err)
+	}
+	if nameIsSignificant(name) {
+		return name
 	}
 	path := strings.Trim(resp.Request.URL.Path, "/")
 	pathElems := strings.Split(path, "/")
