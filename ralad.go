@@ -137,7 +137,7 @@ func makeFilename(resp *http.Response) string {
 	var name string
 	name, err := getMimeFilename(resp)
 	if err != nil {
-		fmt.Fprintf(userWarnStream, "%s", err)
+		fmt.Fprintf(userWarnStream, "%s\n", err)
 	}
 	if nameIsSignificant(name) {
 		return name
