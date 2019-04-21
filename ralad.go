@@ -111,7 +111,8 @@ func nameIsSignificant(n string) bool {
 	case "", "/", "index.html", "index.htm":
 		return false
 	}
-	if _, err := os.Stat(n); err == nil {
+	if _, err := os.Stat(n); !os.IsNotExist(err) {
+		debugf("file exists: %s", n)
 		return false
 	}
 	return true
