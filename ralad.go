@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"crypto/tls"
-	"errors"
 	"flag"
 	"fmt"
 	"gopkg.in/cheggaaa/pb.v1"
@@ -121,7 +120,7 @@ func nameIsSignificant(n string) bool {
 func getMimeFilename(resp *http.Response) (string, error) {
 	cdp := resp.Header.Get("Content-Disposition")
 	if cdp == "" {
-		return "", errors.New("no Content-Disposition header found")
+		return "", nil
 	}
 	debugf("found Content-Disposition header: %+v", cdp)
 	_, params, err := mime.ParseMediaType(cdp)
