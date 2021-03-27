@@ -109,7 +109,7 @@ var makefntests = []MakeFNTest{
 			},
 		},
 		"f4.tgz",
-		"no Content-Disposition header found\n",
+		"",
 	},
 	{
 		&http.Response{
@@ -122,7 +122,7 @@ var makefntests = []MakeFNTest{
 			},
 		},
 		"34g_aw4f_index.html",
-		"no Content-Disposition header found\n",
+		"",
 	},
 	{
 		&http.Response{
@@ -135,7 +135,7 @@ var makefntests = []MakeFNTest{
 			},
 		},
 		"www.example.com_index.html",
-		"no Content-Disposition header found\n",
+		"",
 	},
 	{
 		&http.Response{
@@ -148,7 +148,7 @@ var makefntests = []MakeFNTest{
 			},
 		},
 		"%2fetc%2fpasswd",
-		"no Content-Disposition header found\n",
+		"",
 	},
 }
 
